@@ -3,6 +3,8 @@ name: Build and Publish Docker image
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -25,10 +27,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Define image tags
+        id: meta
+        run: |
+          # Standard-Tag: latest
+          TAGS="nick1122/simpleots:latest"
+
+          # Wenn ein Tag-Build (z.B. refs/tags/v1.0.0)
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            REF_NAME="${GITHUB_REF##*/}"          # z.B. v1.0.0
+            TAGS="$TAGS,nick1122/simpleots:${REF_NAME}"
+          fi
+
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: |
-            nick1122/simpleots:latest
+          tags: ${{ steps.meta.outputs.tags }}
