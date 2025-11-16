@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Link erstellt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: #111827;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: #f3f4f6;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .logo img {
+            height: 180px;
+        }
+
+        @media (max-width: 900px) {
+            .logo img { height: 150px; }
+        }
+
+        @media (max-width: 600px) {
+            .logo img { height: 120px; }
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 26px;
+        }
+
+        .linkbox {
+            margin-top: 20px;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            word-break: break-all;
+            font-size: 16px;
+            border: 1px solid #d1d5db;
+            text-align: left;
+        }
+
+        .copy-btn,
+        .new-btn {
+            margin-top: 16px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .copy-btn:hover,
+        .new-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .hint {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .copied-msg {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #059669;
+            display: none;
+        }
+    </style>
+
+    <script>
+        function copyLink() {
+            const linkText = document.getElementById("secretLink").innerText;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(linkText).then(function () {
+                    showCopiedMsg();
+                }).catch(function () {
+                    fallbackCopy(linkText);
+                });
+            } else {
+                fallbackCopy(linkText);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.left = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+                document.execCommand("copy");
+            } catch (e) {}
+
+            document.body.removeChild(textarea);
+            showCopiedMsg();
+        }
+
+        function showCopiedMsg() {
+            const msg = document.getElementById("copiedMsg");
+            if (!msg) return;
+            msg.style.display = "block";
+            setTimeout(function () {
+                msg.style.display = "none";
+            }, 2000);
+        }
+
+        function newLink() {
+            window.location.href = "/";
+        }
+    </script>
+</head>
+<body>
+
+<div class="card">
+    <div class="logo">
+        <img src="/logo" alt="Logo">
+    </div>
+
+    <h2>Link erfolgreich erstellt</h2>
+
+    <p>Gib diesen Link weiter, um das Passwort sicher zu teilen.</p>
+
+    <div class="linkbox" id="secretLink">{{ link }}</div>
+
+    <button class="copy-btn" type="button" onclick="copyLink()">Link kopieren</button>
+    <div id="copiedMsg" class="copied-msg">Link wurde kopiert.</div>
+
+    <button class="new-btn" type="button" onclick="newLink()">Neuen Link erstellen</button>
+
+    <p class="hint">Der Link ist nur einmal gueltig. Danach wird er automatisch geloescht.</p>
+</div>
+
+</body>
+</html>

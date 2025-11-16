@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Konfiguration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: #111827;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: #f3f4f6;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .logo img {
+            height: 150px;
+        }
+
+        @media (max-width: 600px) {
+            .logo img { height: 120px; }
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        h3 {
+            margin-top: 24px;
+            font-size: 18px;
+        }
+
+        input[type="file"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font: inherit;
+            margin-bottom: 8px;
+            background: #ffffff;
+            color: #111827;
+        }
+
+        button {
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .danger-btn {
+            background: #b91c1c;
+        }
+
+        .danger-btn:hover {
+            background: #991b1b;
+        }
+
+        .message {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #059669;
+        }
+
+        .error {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #b91c1c;
+        }
+
+        .section {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .links {
+            margin-top: 24px;
+            font-size: 14px;
+        }
+
+        .links a {
+            color: #2563eb;
+            text-decoration: none;
+            margin-right: 8px;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        .form-row {
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #374151;
+        }
+
+        .factory-hint {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="logo">
+        <img src="/logo" alt="Logo">
+    </div>
+
+    <h2>Konfiguration</h2>
+
+    {% if message %}
+    <div class="message">{{ message }}</div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <div class="section">
+        <h3>Logo</h3>
+        <p>Aktuelles Logo:</p>
+        <div>
+            <img src="/logo" alt="Logo" style="max-height:150px;">
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+
+            <div class="form-row">
+                <label for="logo">Neues Logo hochladen</label>
+                <input type="file" id="logo" name="logo" accept="image/*">
+            </div>
+            <button type="submit">Logo speichern</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h3>Admin Passwort aendern</h3>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+            <input type="hidden" name="action" value="change_password">
+
+            <div class="form-row">
+                <label for="old_password">Altes Passwort</label>
+                <input id="old_password" name="old_password" type="password" autocomplete="current-password">
+            </div>
+
+            <div class="form-row">
+                <label for="new_password">Neues Passwort</label>
+                <input id="new_password" name="new_password" type="password" autocomplete="new-password">
+            </div>
+
+            <div class="form-row">
+                <label for="new_password_confirm">Neues Passwort wiederholen</label>
+                <input id="new_password_confirm" name="new_password_confirm" type="password" autocomplete="new-password">
+            </div>
+
+            <button type="submit">Passwort aendern</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h3>Werkseinstellungen</h3>
+        <p class="factory-hint">
+            Achtung: Loescht alle gespeicherten Passwoerter, das Admin-Konto und das Logo.
+            Danach startet das System wieder mit der Ersteinrichtung.
+        </p>
+        <form method="POST" onsubmit="return confirm('Alle Daten loeschen und zur Ersteinrichtung zuruecksetzen?');">
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+            <input type="hidden" name="action" value="factory_reset">
+            <button type="submit" class="danger-btn">Werkseinstellungen zuruecksetzen</button>
+        </form>
+    </div>
+
+    <div class="links">
+        <a href="/">Zur Startseite</a>
+        <a href="/admin/logout">Logout</a>
+    </div>
+</div>
+
+</body>
+</html>

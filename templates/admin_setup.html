@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Passwort festlegen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: #111827;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: #f3f4f6;
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .logo img {
+            height: 150px;
+        }
+
+        @media (max-width: 600px) {
+            .logo img { height: 120px; }
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #374151;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font: inherit;
+            margin-bottom: 12px;
+            background: #ffffff;
+            color: #111827;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .error {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #b91c1c;
+        }
+
+        .hint {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="logo">
+        <img src="/logo" alt="Logo">
+    </div>
+
+    <h2>Admin Passwort festlegen</h2>
+
+    <p class="hint">
+        Benutzername ist <strong>admin</strong>. Bitte ein Passwort vergeben.
+    </p>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+
+        <label for="password">Passwort</label>
+        <input id="password" name="password" type="password" required>
+
+        <label for="password_confirm">Passwort wiederholen</label>
+        <input id="password_confirm" name="password_confirm" type="password" required>
+
+        <button type="submit">Speichern</button>
+    </form>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+</div>
+
+</body>
+</html>

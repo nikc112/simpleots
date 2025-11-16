@@ -1,0 +1,27 @@
+services:
+  redis:
+    image: redis:7
+    container_name: simpleots-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./redis:/data
+    restart: unless-stopped
+
+  simpleots:
+    image: nick1122/simpleots:latest
+    container_name: simpleots
+    depends_on:
+      - redis
+    ports:
+      - "7143:5000"
+    restart: unless-stopped
+    environment:
+      BASE_URL: "http://SERVER-IP-ODER-DOMAIN:7143"
+      DATA_DIR: "/app/data"
+      ADMIN_TIMEOUT: "300"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      MASTER_KEY: "HIER_LANGEN_RANDOM_KEY_EINTRAGEN"
+    volumes:
+      - ./data:/app/data

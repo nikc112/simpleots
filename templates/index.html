@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Passwoerter sicher austauschen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #ffffff;
+            color: #111827;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .admin-link {
+            position: absolute;
+            top: 16px;
+            right: 24px;
+            font-size: 14px;
+        }
+
+        .admin-link a {
+            color: #6b7280;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .admin-link a:hover {
+            text-decoration: underline;
+            color: #2563eb;
+        }
+
+        .layout {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .left {
+            flex: 1.2;
+        }
+
+        .logo {
+            margin-bottom: 32px;
+        }
+
+        .logo img {
+            height: 220px; /* Desktop */
+        }
+
+        @media (max-width: 1200px) {
+            .logo img { height: 200px; }
+        }
+
+        @media (max-width: 900px) {
+            .logo img { height: 160px; }
+        }
+
+        @media (max-width: 600px) {
+            .logo img { height: 130px; }
+        }
+
+        @media (max-width: 420px) {
+            .logo img { height: 110px; }
+        }
+
+        h1 {
+            font-size: 36px;
+            margin: 0 0 16px 0;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #4b5563;
+        }
+
+        .subtitle p {
+            margin: 0 0 4px 0;
+        }
+
+        .right {
+            flex: 1;
+        }
+
+        .card {
+            background: #f3f4f6;
+            border-radius: 16px;
+            padding: 24px 24px 28px 24px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            font: inherit;
+            color: #111827;
+        }
+
+        input::placeholder {
+            color: #111827;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            font: inherit;
+            color: #111827 !important;
+        }
+
+        select option {
+            color: #111827 !important;
+        }
+
+        select option[disabled] {
+            color: #111827 !important;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .hint {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .error-msg {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #b91c1c;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                flex-direction: column;
+                gap: 32px;
+            }
+            .left, .right {
+                flex: none;
+                width: 100%;
+            }
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="admin-link">
+        <a href="/admin/">Admin</a>
+    </div>
+
+    <div class="layout">
+
+        <div class="left">
+            <div class="logo">
+                <img src="/logo" alt="Logo">
+            </div>
+            <h1>Passwoerter sicher austauschen</h1>
+            <div class="subtitle">
+                <p>Passwort eingeben.</p>
+                <p>Ablauf festlegen.</p>
+                <p>Link teilen.</p>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="card">
+                <form action="/" method="POST">
+
+                    <div class="field">
+                        <input
+                            id="secret"
+                            name="secret"
+                            type="text"
+                            placeholder="Passwort"
+                            required>
+                    </div>
+
+                    <div class="field">
+                        <select id="ttl" name="ttl" required>
+                            <option value="" disabled selected hidden>Gueltigkeit</option>
+                            <option value="3600">1 Stunde</option>
+                            <option value="43200">12 Stunden</option>
+                            <option value="86400">24 Stunden</option>
+                            <option value="172800">48 Stunden</option>
+                            <option value="604800">1 Woche</option>
+                            <option value="1209600">2 Wochen</option>
+                        </select>
+                    </div>
+
+                    <button type="submit">Link erstellen</button>
+
+                    <div class="hint">
+                        Passwoerter werden nach einmaligem Abruf geloescht.
+                    </div>
+
+                    {% if error %}
+                    <div class="error-msg">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
