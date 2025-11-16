@@ -1,4 +1,5 @@
 # SimpleOTS – Self-Hosted One-Time-Password Tool
+Dieses Tool ist mit Hilfe von ChatGPT erstellt worden.
 
 **SimpleOTS** ist ein selbst gehostetes Tool zum sicheren Teilen von **einmalig abrufbaren Passwoertern**.  
 Ideal fuer Admins, IT-Support und Unternehmen, die Passwoerter **nicht per E-Mail, WhatsApp oder Teams** austauschen wollen.
