@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Passwort festlegen</title>
+    <title>Admin Zugang festlegen</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -45,6 +45,7 @@
             color: #374151;
         }
 
+        input[type="text"],
         input[type="password"] {
             width: 100%;
             padding: 8px 10px;
@@ -92,14 +93,17 @@
         <img src="/logo" alt="Logo">
     </div>
 
-    <h2>Admin Passwort festlegen</h2>
+    <h2>Admin Zugang festlegen</h2>
 
     <p class="hint">
-        Benutzername ist <strong>admin</strong>. Bitte ein Passwort vergeben.
+        Bitte einen Benutzernamen und ein Passwort fuer den Admin Bereich vergeben.
     </p>
 
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+
+        <label for="username">Benutzername</label>
+        <input id="username" name="username" type="text" required>
 
         <label for="password">Passwort</label>
         <input id="password" name="password" type="password" required>

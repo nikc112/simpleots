@@ -34,7 +34,7 @@
         }
 
         h2 {
-            margin-top: 0;
+            margin-top: 16px;
             font-size: 24px;
         }
 
@@ -67,6 +67,18 @@
         }
 
         button:hover {
+            background: #1d4ed8;
+        }
+
+        .small-btn {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 999px;
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .small-btn:hover {
             background: #1d4ed8;
         }
 
@@ -127,13 +139,80 @@
             color: #6b7280;
             margin-top: 8px;
         }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .user-block {
+            text-align: right;
+        }
+
+        .user-info {
+            font-size: 13px;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+
+        .version-info {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .update-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 600;
+            background: #f97316;
+            color: #ffffff;
+        }
+
+        @media (max-width: 600px) {
+            .header-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .user-block {
+                text-align: left;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="logo">
-        <img src="/logo" alt="Logo">
+
+    <div class="header-row">
+        <div class="logo">
+            <img src="/logo" alt="Logo">
+        </div>
+
+        <div class="user-block">
+            <div class="user-info">
+                Angemeldet als: <strong>{{ username }}</strong>
+            </div>
+            <a href="/admin/logout">
+                <button class="small-btn">Logout</button>
+            </a>
+
+            <div class="version-info">
+                Version: {{ version }}
+                {% if update_available %}
+                    <span class="update-badge">
+                        Update verfuegbar{% if latest_version %} ({{ latest_version }}){% endif %}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <h2>Konfiguration</h2>
@@ -148,10 +227,6 @@
 
     <div class="section">
         <h3>Logo</h3>
-        <p>Aktuelles Logo:</p>
-        <div>
-            <img src="/logo" alt="Logo" style="max-height:150px;">
-        </div>
 
         <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">

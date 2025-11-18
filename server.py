@@ -6,6 +6,8 @@ import time
 import json
 import hashlib
 from functools import wraps
+import urllib.request
+import urllib.error
 
 from flask import (
     Flask,
@@ -30,6 +32,24 @@ DATA_DIR = os.getenv("DATA_DIR", "/app/data")
 ADMIN_TIMEOUT = int(os.getenv("ADMIN_TIMEOUT", "300"))  # Sekunden
 ADMIN_CONFIG_FILE = os.path.join(DATA_DIR, "admin.json")
 FIXED_ADMIN_USER = "admin"
+
+# ---------------------------------------------------------
+# Version: fest im Code + optional aus /app/version.txt
+# ---------------------------------------------------------
+VERSION = "1.0.0"  # HIER deine Release-Version eintragen
+VERSION_FILE = "/app/version.txt"
+
+if os.path.exists(VERSION_FILE):
+    try:
+        with open(VERSION_FILE, "r") as vf:
+            v = vf.read().strip()
+            if v:
+                VERSION = v
+    except Exception:
+        pass
+
+# GitHub Repo fuer Update-Check (kann fuer Forks per ENV ueberschrieben werden)
+GITHUB_REPO = os.getenv("GITHUB_REPO", "nikc112/simpleots")
 
 # Sicherheits-Limits
 MAX_TTL = 14 * 24 * 3600         # max. 14 Tage
@@ -106,9 +126,24 @@ def verify_admin_password(password):
     return stored == _hash_password(password)
 
 
-def set_admin_password(password):
+def set_admin_credentials(username, password):
+    """
+    Admin-Benutzername und Passwort setzen.
+    """
     cfg = _load_admin_config()
-    cfg["username"] = FIXED_ADMIN_USER
+    cfg["username"] = (username or "").strip() or FIXED_ADMIN_USER
+    cfg["password_hash"] = _hash_password(password)
+    _save_admin_config(cfg)
+
+
+def set_admin_password(password):
+    """
+    Nur das Passwort aendern, Benutzername beibehalten.
+    Falls noch keiner gesetzt ist, wird auf FIXED_ADMIN_USER zurueckgegriffen.
+    """
+    cfg = _load_admin_config()
+    username = cfg.get("username") or FIXED_ADMIN_USER
+    cfg["username"] = username
     cfg["password_hash"] = _hash_password(password)
     _save_admin_config(cfg)
 
@@ -121,6 +156,65 @@ def admin_required(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+# --------------------------------------------------------------------
+# GitHub Version Check (mit einfachem Cache)
+# --------------------------------------------------------------------
+
+_latest_version_cache = {
+    "value": None,
+    "ts": 0.0,
+}
+
+
+def _parse_version(v):
+    """
+    "1.0.3", "v1.0.3", "1.0.3-beta" -> [1,0,3]
+    Alles nicht numerische ausser '.' wird entfernt.
+    """
+    if not v:
+        return [0]
+    v = v.strip()
+    cleaned = "".join(ch for ch in v if (ch.isdigit() or ch == "."))
+    if not cleaned:
+        return [0]
+    parts = []
+    for part in cleaned.split("."):
+        if part.isdigit():
+            parts.append(int(part))
+        else:
+            parts.append(0)
+    while len(parts) < 3:
+        parts.append(0)
+    return parts
+
+
+def get_latest_github_version():
+    """
+    Holt die neueste Release-Version von GitHub (tag_name) und cached sie fuer 1 Stunde.
+    Gibt z.B. "1.0.1" oder "v1.0.1" oder None bei Fehler zurueck.
+    """
+    now = time.time()
+    if _latest_version_cache["value"] is not None and (now - _latest_version_cache["ts"] < 3600):
+        return _latest_version_cache["value"]
+
+    api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    try:
+        req = urllib.request.Request(
+            api_url,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "User-Agent": "simpleots-version-check",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        tag = data.get("tag_name") or ""
+        _latest_version_cache["value"] = tag
+        _latest_version_cache["ts"] = now
+        return tag
+    except Exception:
+        return None
+
 
 @app.before_request
 def global_guard_and_timeout():
@@ -131,7 +225,6 @@ def global_guard_and_timeout():
     2) Wenn Passwort gesetzt ist:
        -> Admin-Timeout pruefen.
     """
-    # 1) Setup-Zwang beim ersten Start
     if not is_admin_password_set():
         path = request.path or "/"
         if (
@@ -143,7 +236,6 @@ def global_guard_and_timeout():
             return
         return redirect(url_for("admin_root"))
 
-    # 2) Admin-Timeout fuer eingeloggt
     if not session.get("admin"):
         return
 
@@ -188,25 +280,21 @@ def index():
     if request.method == "GET":
         return render_template("index.html", error="")
 
-    # POST: Passwort anlegen
     secret_text = (request.form.get("secret") or "").strip()
     ttl_raw = request.form.get("ttl") or ""
 
-    # Passwort leer oder nur Leerzeichen
     if not secret_text:
         return render_template(
             "index.html",
             error="Bitte ein Passwort eingeben."
         )
 
-    # Laengenlimit
     if len(secret_text) > MAX_SECRET_LEN:
         return render_template(
             "index.html",
             error="Passwort ist zu lang."
         )
 
-    # TTL pruefen
     try:
         ttl = int(ttl_raw)
     except ValueError:
@@ -254,7 +342,6 @@ def logo():
 
 @app.route("/admin/", methods=["GET", "POST"])
 def admin_root():
-    # CSRF fuer Admin-POSTs pruefen
     if request.method == "POST":
         _check_csrf()
 
@@ -263,17 +350,22 @@ def admin_root():
         error = ""
 
         if request.method == "POST":
+            username = (request.form.get("username") or "").strip()
             pw1 = (request.form.get("password") or "").strip()
             pw2 = (request.form.get("password_confirm") or "").strip()
 
-            if not pw1:
+            if not username:
+                error = "Bitte einen Benutzernamen eingeben."
+            elif len(username) < 3:
+                error = "Benutzername muss mindestens 3 Zeichen haben."
+            elif not pw1:
                 error = "Bitte ein Passwort eingeben."
             elif pw1 != pw2:
                 error = "Passwoerter stimmen nicht ueberein."
             elif len(pw1) < 8:
                 error = "Passwort muss mindestens 8 Zeichen haben."
             else:
-                set_admin_password(pw1)
+                set_admin_credentials(username, pw1)
                 session["admin"] = True
                 session["last_activity"] = time.time()
                 session["login_failures"] = 0
@@ -285,26 +377,34 @@ def admin_root():
     if not session.get("admin"):
         error = ""
 
-        # Brute-Force-Minimalschutz
         failures = session.get("login_failures", 0)
         if failures >= 5:
             error = "Zu viele Fehlversuche. Bitte spaeter erneut versuchen."
             return render_template("admin_login.html", error=error)
 
         if request.method == "POST":
+            username = (request.form.get("username") or "").strip()
             pw = (request.form.get("password") or "").strip()
-            if verify_admin_password(pw):
+
+            cfg = _load_admin_config()
+            stored_username = cfg.get("username") or FIXED_ADMIN_USER
+
+            if (
+                username
+                and username == stored_username
+                and verify_admin_password(pw)
+            ):
                 session["admin"] = True
                 session["last_activity"] = time.time()
                 session["login_failures"] = 0
                 return redirect(url_for("admin_root"))
             else:
                 session["login_failures"] = failures + 1
-                error = "Passwort ist falsch."
+                error = "Benutzername oder Passwort ist falsch."
 
         return render_template("admin_login.html", error=error)
 
-    # 3) Eingeloggt -> Konfigseite (Logo + Passwort aendern + Factory Reset)
+    # 3) Eingeloggt -> Konfigseite
     message = ""
     error = ""
 
@@ -329,7 +429,6 @@ def admin_root():
                 message = "Admin Passwort wurde geaendert."
 
         elif action == "factory_reset":
-            # Alles loeschen: Secrets, Admin-Config, Logo
             try:
                 store.clear_all()
             except Exception:
@@ -348,12 +447,10 @@ def admin_root():
             except Exception:
                 pass
 
-            # Session loeschen und zur Setup-Seite
             session.clear()
             return redirect(url_for("admin_root"))
 
         else:
-            # Logo-Upload (Standard-Action ohne "action" oder anderes)
             file = request.files.get("logo")
             if file and file.filename:
                 save_path = os.path.join(DATA_DIR, "logo.png")
@@ -362,7 +459,32 @@ def admin_root():
             else:
                 error = "Keine Datei ausgewaehlt."
 
-    return render_template("admin_config.html", message=message, error=error)
+    cfg = _load_admin_config()
+    username = cfg.get("username") or FIXED_ADMIN_USER
+
+    latest_tag = get_latest_github_version()
+    latest_version = None
+    update_available = False
+
+    if latest_tag:
+        latest_version = latest_tag
+        try:
+            current_parsed = _parse_version(VERSION)
+            latest_parsed = _parse_version(latest_tag)
+            if latest_parsed > current_parsed:
+                update_available = True
+        except Exception:
+            update_available = False
+
+    return render_template(
+        "admin_config.html",
+        message=message,
+        error=error,
+        username=username,
+        version=VERSION,
+        latest_version=latest_version,
+        update_available=update_available,
+    )
 
 
 @app.route("/admin/logout")

@@ -45,6 +45,7 @@
             color: #374151;
         }
 
+        input[type="text"],
         input[type="password"] {
             width: 100%;
             padding: 8px 10px;
@@ -102,10 +103,11 @@
 
     <h2>Admin Login</h2>
 
-    <p>Benutzername: <strong>admin</strong></p>
-
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+
+        <label for="username">Benutzername</label>
+        <input id="username" name="username" type="text" required>
 
         <label for="password">Passwort</label>
         <input id="password" name="password" type="password" required>
