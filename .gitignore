@@ -6,3 +6,4 @@ __pycache__/
 docker-compose.yml
 .idea/
 .vscode/
+build_release.sh
