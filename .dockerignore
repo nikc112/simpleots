@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.example
+__pycache__
+*.pyc
+build_release.sh
+docker-compose.yml
+docker-compose.example.yml
+README.md
+SHORT_DESCRIPTION.txt
+task.md
+implementation_plan.md

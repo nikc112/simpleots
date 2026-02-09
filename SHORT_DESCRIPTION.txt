@@ -1,0 +1,1 @@
+Secure Self-Hosted OTP Tool. AES-256 encryption, Redis, Docker support.

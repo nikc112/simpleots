@@ -19,6 +19,7 @@ Die Anwendung speichert Passwoerter **nie im Klartext**, sondern verschluesselt 
 - 📱 Responsive Web-UI
 - 🧩 Komplett per Docker Compose installierbar
 - 🚀 Produktionstauglich (Gunicorn + Redis)
+- 🔄 Automatische Update-Benachrichtigung
 
 ---
 
@@ -29,36 +30,31 @@ Die Anwendung speichert Passwoerter **nie im Klartext**, sondern verschluesselt 
 ```bash
 git clone https://github.com/nikc112/simpleots.git
 cd simpleots
-2. Beispiel-Konfiguration kopieren
-bash
-Code kopieren
+## 2. Beispiel-Konfiguration kopieren
+
+```bash
 cp docker-compose.example.yml docker-compose.yml
-3. docker-compose.yml bearbeiten
-Datei oeffnen:
+cp .env.example .env
+```
 
+## 3. Konfiguration anpassen (.env)
 
-nano docker-compose.yml
-BASE_URL setzen
+Öffne die Datei `.env` und passe die Werte an:
 
-BASE_URL: "http://SERVER-IP-ODER-DOMAIN:7143"
-Beispiele:
+```ini
+# Deine Domain (ohne Slash am Ende)
+BASE_URL=https://ots.meinefirma.de
 
-http://192.168.1.50:7143
+# Ein langer, zufaelliger Schluessel (mind. 32–64 Zeichen)
+# Generieren z.B. mit: openssl rand -base64 48
+MASTER_KEY=hier_einen_langen_random_key_eintragen
+```
 
-https://ots.meinefirma.de (wenn Reverse Proxy genutzt)
+## 4. Starten
 
-MASTER_KEY setzen
-Ein langer, zufaelliger Schluessel (mind. 32–64 Zeichen):
-
-
-MASTER_KEY: "hier_einen_langen_random_key_eintragen"
-Guten Key generieren:
-
-openssl rand -base64 48
-
-4. Starten
-
+```bash
 docker compose up -d
+```
 
 
 5. Zugriff im Browser
