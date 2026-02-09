@@ -1,0 +1,21 @@
+services:
+  redis:
+    image: redis:7
+    container_name: simpleots-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./redis:/data
+    restart: unless-stopped
+
+  simpleots:
+    build: .
+    container_name: simpleots
+    depends_on:
+      - redis
+    ports:
+      - "7143:5000"
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
