@@ -9,6 +9,8 @@ from functools import wraps
 import urllib.request
 import urllib.error
 
+import redis
+
 from flask import (
     Flask,
     request,
@@ -45,7 +47,7 @@ if os.path.exists(VERSION_FILE):
             v = vf.read().strip()
             if v:
                 VERSION = v
-    except Exception:
+    except OSError:
         pass
 
 # Sicherheits-Limits
@@ -91,7 +93,7 @@ def _load_admin_config():
     try:
         with open(ADMIN_CONFIG_FILE, "r") as f:
             return json.load(f)
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return {}
 
 
@@ -237,8 +239,24 @@ def get_latest_docker_hub_version():
             
         return None
 
-    except Exception:
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, OSError):
         return None
+
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:;"
+    )
+    if SECURE_COOKIES:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 
 @app.before_request
@@ -383,6 +401,8 @@ def admin_root():
                 error = "Bitte einen Benutzernamen eingeben."
             elif len(username) < 3:
                 error = "Benutzername muss mindestens 3 Zeichen haben."
+            elif len(username) > 64:
+                error = "Benutzername darf maximal 64 Zeichen haben."
             elif not pw1:
                 error = "Bitte ein Passwort eingeben."
             elif pw1 != pw2:
@@ -456,20 +476,20 @@ def admin_root():
         elif action == "factory_reset":
             try:
                 store.clear_all()
-            except Exception:
+            except redis.RedisError:
                 pass
 
             try:
                 if os.path.exists(ADMIN_CONFIG_FILE):
                     os.remove(ADMIN_CONFIG_FILE)
-            except Exception:
+            except OSError:
                 pass
 
             try:
                 logo_path = os.path.join(DATA_DIR, "logo.png")
                 if os.path.exists(logo_path):
                     os.remove(logo_path)
-            except Exception:
+            except OSError:
                 pass
 
             session.clear()
@@ -478,9 +498,13 @@ def admin_root():
         else:
             file = request.files.get("logo")
             if file and file.filename:
-                save_path = os.path.join(DATA_DIR, "logo.png")
-                file.save(save_path)
-                message = "Logo wurde aktualisiert."
+                allowed_mime_types = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+                if file.mimetype not in allowed_mime_types:
+                    error = "Nur Bilddateien (PNG, JPEG, GIF, WebP) sind erlaubt."
+                else:
+                    save_path = os.path.join(DATA_DIR, "logo.png")
+                    file.save(save_path)
+                    message = "Logo wurde aktualisiert."
             else:
                 error = "Keine Datei ausgewaehlt."
 
@@ -498,7 +522,7 @@ def admin_root():
             latest_parsed = _parse_version(latest_tag)
             if latest_parsed > current_parsed:
                 update_available = True
-        except Exception:
+        except (ValueError, TypeError):
             update_available = False
 
     return render_template(

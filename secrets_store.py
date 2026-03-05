@@ -5,7 +5,7 @@ import hashlib
 import base64
 
 import redis
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 
 def _build_fernet_key():
@@ -63,7 +63,7 @@ class SecretsStore:
 
         try:
             plaintext = self.fernet.decrypt(value)
-        except Exception:
+        except InvalidToken:
             return None
 
         return plaintext.decode("utf-8")
